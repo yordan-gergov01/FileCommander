@@ -47,7 +47,22 @@ const fs = require("fs/promises");
       }
     }
   };
-  const addToFile = (path, content) => {};
+
+  let addedContent;
+
+  // Variant II: fsPromises.appendFile(), but behind the scenes it uses the same approach with open the file first
+  const addToFile = async (path, content) => {
+    if (addedContent === content) return;
+
+    try {
+      const fileHandle = await fs.open(path, "a");
+      fileHandle.write(content);
+      addedContent = content;
+      console.log(`Content was successfully added.`);
+    } catch (error) {
+      console.log(`An error occured while removing the file:`, error);
+    }
+  };
 
   const commandFileHandler = await fs.open("./command.txt", "r");
 

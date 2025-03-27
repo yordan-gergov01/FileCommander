@@ -14,9 +14,17 @@ const fs = require("fs/promises");
 
       return console.log(`The file ${path} already exists.`);
     } catch (error) {
-      const newFileHandle = await fs.open(path, "w");
-      console.log("A new file was successfully created.");
-      newFileHandle.close();
+      if (error.code === "ENOENT") {
+        try {
+          const newFileHandle = await fs.open(path, "w");
+          console.log("A new file was successfully created.");
+          newFileHandle.close();
+        } catch (writeError) {
+          console.error(`Error creating file ${path}:`, writeError);
+        }
+      } else {
+        console.error(`Error checking existence of file ${path}:`, error);
+      }
     }
   };
 
@@ -59,8 +67,13 @@ const fs = require("fs/promises");
       fileHandle.write(content);
       addedContent = content;
       console.log(`Content was successfully added.`);
+      fileHandle.close();
     } catch (error) {
-      console.log(`An error occured while removing the file:`, error);
+      if (error.code === "ENOENT") {
+        console.log(`The file ${path} does not exist.`);
+      } else {
+        console.error(`Error adding content to file ${path}:`, error);
+      }
     }
   };
 
@@ -69,6 +82,7 @@ const fs = require("fs/promises");
   commandFileHandler.on("change", async () => {
     // get the size of the file
     const size = (await commandFileHandler.stat()).size;
+    if (size === 0) return;
     // allocate buffer with the size of the file
     const buff = Buffer.alloc(size);
 
